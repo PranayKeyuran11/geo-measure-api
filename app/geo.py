@@ -1,5 +1,6 @@
 from pyproj import Geod
 from shapely.geometry import shape
+from shapely.geometry.polygon import orient
 
 GEOD = Geod(ellps="WGS84")
 
@@ -20,7 +21,7 @@ def _measure_parts(geom):
     if geom.geom_type == "LineString":
         return 0.0, 0.0, GEOD.geometry_length(geom)
     if geom.geom_type == "Polygon":
-        area, perimeter = GEOD.geometry_area_perimeter(geom)
+        area, perimeter = GEOD.geometry_area_perimeter(orient(geom, sign=1.0))
         return abs(area), perimeter, 0.0
 
     # Multi* types and GeometryCollection: sum the parts
