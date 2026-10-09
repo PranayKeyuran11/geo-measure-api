@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"name": "Test square"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[78.0, 17.0], [78.1, 17.0], [78.1, 17.1], [78.0, 17.1], [78.0, 17.0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"name": "Test road"},
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[78.0, 17.0], [78.05, 17.05], [78.1, 17.1]]
+      }
+    }
+  ]
+}
