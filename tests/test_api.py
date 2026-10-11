@@ -16,7 +16,44 @@ def upload(payload, name="test.geojson"):
 
 
 def test_health():
-    assert client.get("/health").json() == {"status": "ok"}
+    body = client.get("/health").json()
+    assert body["status"] == "ok"
+    assert body["version"] == "1.0.0"
+
+
+def test_status_and_metrics():
+    status_response = client.get("/status")
+    metrics_response = client.get("/metrics")
+    assert status_response.status_code == 200
+    assert metrics_response.status_code == 200
+    assert status_response.json()["request_count"] >= 0
+    assert metrics_response.json()["service"] == "geo-measure-api"
+
+
+def test_requires_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("API_KEY", "super-secret")
+    r = client.post("/measure", json={"type": "Polygon", "coordinates": [SQUARE]})
+    assert r.status_code == 401
+
+
+def test_batch_measurement_and_history(monkeypatch):
+    monkeypatch.setenv("API_KEY", "super-secret")
+    client_with_auth = TestClient(app)
+    payloads = [
+        {"type": "Polygon", "coordinates": [SQUARE]},
+        {"type": "LineString", "coordinates": [[0, 0], [0, 1]]},
+    ]
+    batch = client_with_auth.post(
+        "/measure/batch",
+        json=payloads,
+        headers={"X-API-Key": "super-secret"},
+    )
+    assert batch.status_code == 200
+    assert len(batch.json()) == 2
+
+    history = client_with_auth.get("/history", headers={"X-API-Key": "super-secret"})
+    assert history.status_code == 200
+    assert history.json()["total"] >= 1
 
 
 def test_polygon_area_and_bbox():
@@ -51,6 +88,21 @@ def test_feature_collection_summary():
     body = upload(fc).json()
     assert body["feature_count"] == 2
     assert body["total_length_m"] > 0
+
+
+def test_root_metadata():
+    r = client.get("/")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["title"] == "Geospatial File Measurement API"
+    assert body["version"] == "1.0.0"
+
+
+def test_json_payload_is_supported():
+    payload = {"type": "Polygon", "coordinates": [SQUARE]}
+    r = client.post("/measure", json=payload)
+    assert r.status_code == 200
+    assert r.json()["feature_count"] == 1
 
 
 def test_invalid_json():

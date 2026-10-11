@@ -35,8 +35,19 @@ def _measure_parts(geom):
 
 
 def _extract_features(data):
-    if not isinstance(data, dict) or "type" not in data:
+    if isinstance(data, list):
+        if not data:
+            raise GeoJSONError("No features found in file.")
+        return data
+
+    if not isinstance(data, dict):
         raise GeoJSONError("Not a valid GeoJSON object: missing 'type'.")
+
+    if "type" not in data:
+        if "geometry" in data:
+            return [data]
+        raise GeoJSONError("Not a valid GeoJSON object: missing 'type'.")
+
     kind = data["type"]
     if kind == "FeatureCollection":
         features = data.get("features")
