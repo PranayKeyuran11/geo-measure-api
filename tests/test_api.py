@@ -30,6 +30,15 @@ def test_status_and_metrics():
     assert metrics_response.json()["service"] == "geo-measure-api"
 
 
+def test_summary_endpoint():
+    r = client.get("/summary")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["service"] == "geo-measure-api"
+    assert body["version"] == "1.0.0"
+    assert "uptime_seconds" in body
+
+
 def test_requires_api_key_when_configured(monkeypatch):
     monkeypatch.setenv("API_KEY", "super-secret")
     r = client.post("/measure", json={"type": "Polygon", "coordinates": [SQUARE]})

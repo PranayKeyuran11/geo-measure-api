@@ -5,6 +5,7 @@ from time import time
 from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -20,6 +21,19 @@ app = FastAPI(
     description="Upload a GeoJSON file or submit a JSON payload and get area, perimeter, length, and bounding box per feature (geodesic, WGS84).",
     version="1.0.0",
 )
+
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000",
+).split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in allowed_origins if origin.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.state.started_at = time()
 app.state.request_count = 0
@@ -92,6 +106,27 @@ def health(request: Request):
         "uptime_seconds": round(time() - app.state.started_at, 2),
         "request_count": app.state.request_count,
         "request_id": getattr(request.state, "request_id", None),
+    }
+
+
+@app.get("/summary")
+def summary(request: Request):
+    require_api_key(request)
+    return {
+        "service": "geo-measure-api",
+        "version": app.version,
+        "status": "ok",
+        "uptime_seconds": round(time() - app.state.started_at, 2),
+        "request_count": app.state.request_count,
+        "measurement_count": app.state.measurement_count,
+        "history_count": count_measurements(),
+        "features": {
+            "upload": True,
+            "json_payload": True,
+            "batch_processing": True,
+            "history": True,
+            "ui": True,
+        },
     }
 
 
