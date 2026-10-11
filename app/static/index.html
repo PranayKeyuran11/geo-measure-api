@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Geo Measure Studio</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Geospatial analytics</p>
+          <h1>Geo Measure Studio</h1>
+        </div>
+        <div class="api-controls">
+          <label>
+            <span>API Key</span>
+            <input id="apiKey" type="password" placeholder="Optional if API key is not enabled" />
+          </label>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel input-panel">
+          <h2>Measure GeoJSON</h2>
+          <div class="mode-toggle">
+            <button class="active" data-mode="upload" type="button">Upload file</button>
+            <button data-mode="json" type="button">Raw JSON</button>
+          </div>
+
+          <div id="uploadSection" class="section-block">
+            <label class="file-drop">
+              <input id="fileInput" type="file" accept=".geojson,.json" />
+              <span>Choose a GeoJSON file</span>
+            </label>
+          </div>
+
+          <div id="jsonSection" class="section-block hidden">
+            <textarea id="jsonInput" rows="16" placeholder='{"type":"FeatureCollection","features":[...]}'>
+            </textarea>
+          </div>
+
+          <div class="actions">
+            <button id="measureButton" class="primary" type="button">Measure</button>
+            <button id="sampleButton" class="secondary" type="button">Load sample</button>
+          </div>
+        </section>
+
+        <section class="panel output-panel">
+          <h2>Results</h2>
+          <pre id="output">Waiting for measurement…</pre>
+        </section>
+      </main>
+
+      <section class="panel history-panel">
+        <div class="history-header">
+          <h2>Recent measurements</h2>
+          <button id="historyButton" type="button">Refresh</button>
+        </div>
+        <div id="historyList" class="history-list">No measurements yet.</div>
+      </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

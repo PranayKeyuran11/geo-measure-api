@@ -1,20 +1,26 @@
 import json
 import os
+from pathlib import Path
 from time import time
 from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.geo import GeoJSONError, measure_geojson
 from app.storage import count_measurements, list_measurements, save_measurement
 
 MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 
+BASE_DIR = Path(__file__).resolve().parent
+
 app = FastAPI(
     title="Geospatial File Measurement API",
     description="Upload a GeoJSON file or submit a JSON payload and get area, perimeter, length, and bounding box per feature (geodesic, WGS84).",
     version="1.0.0",
 )
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.state.started_at = time()
 app.state.request_count = 0
 app.state.measurement_count = 0
@@ -50,7 +56,11 @@ async def request_metrics(request: Request, call_next):
 
 
 @app.get("/")
-def root():
+def root(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        return RedirectResponse(url="/ui")
+
     return {
         "title": app.title,
         "description": app.description,
@@ -62,8 +72,14 @@ def root():
         "docs": "/docs",
         "measure": "/measure",
         "batch_measure": "/measure/batch",
+        "ui": "/ui",
         "max_upload_size_mb": MAX_BYTES // (1024 * 1024),
     }
+
+
+@app.get("/ui")
+def ui():
+    return FileResponse(BASE_DIR / "static" / "index.html")
 
 
 @app.get("/health")

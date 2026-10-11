@@ -98,6 +98,17 @@ def test_root_metadata():
     assert body["version"] == "1.0.0"
 
 
+def test_ui_page_is_served():
+    r = client.get("/ui")
+    assert r.status_code == 200
+    assert "Geo Measure Studio" in r.text
+
+
+def test_browser_root_redirects_to_ui():
+    r = client.get("/", headers={"accept": "text/html"})
+    assert r.status_code in {200, 307, 302}
+
+
 def test_json_payload_is_supported():
     payload = {"type": "Polygon", "coordinates": [SQUARE]}
     r = client.post("/measure", json=payload)
