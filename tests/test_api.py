@@ -39,6 +39,13 @@ def test_summary_endpoint():
     assert "uptime_seconds" in body
 
 
+def test_export_endpoint_returns_csv():
+    r = client.get("/export?format=csv")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/csv")
+    assert "id,created_at" in r.text
+
+
 def test_requires_api_key_when_configured(monkeypatch):
     monkeypatch.setenv("API_KEY", "super-secret")
     r = client.post("/measure", json={"type": "Polygon", "coordinates": [SQUARE]})

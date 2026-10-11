@@ -5,6 +5,7 @@ const output = document.getElementById('output');
 const historyList = document.getElementById('historyList');
 const measureButton = document.getElementById('measureButton');
 const sampleButton = document.getElementById('sampleButton');
+const downloadCsvButton = document.getElementById('downloadCsvButton');
 const historyButton = document.getElementById('historyButton');
 const uploadSection = document.getElementById('uploadSection');
 const jsonSection = document.getElementById('jsonSection');
@@ -129,6 +130,25 @@ buttons.forEach((button) => {
 
 measureButton.addEventListener('click', measure);
 historyButton.addEventListener('click', loadHistory);
+downloadCsvButton.addEventListener('click', async () => {
+  try {
+    const response = await fetch('/export?format=csv', {
+      headers: getHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('CSV export is unavailable');
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'geo-measurements.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    output.textContent = `Export error: ${error.message}`;
+  }
+});
 sampleButton.addEventListener('click', () => {
   jsonInput.value = JSON.stringify(sampleGeojson, null, 2);
   setMode('json');

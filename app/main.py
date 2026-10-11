@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.geo import GeoJSONError, measure_geojson
@@ -159,6 +159,42 @@ def history(request: Request, limit: int = 20):
         "limit": max(1, min(limit, 100)),
         "items": list_measurements(limit=max(1, min(limit, 100))),
     }
+
+
+@app.get("/export")
+def export_records(request: Request, format: str = "csv", limit: int = 100):
+    require_api_key(request)
+    items = list_measurements(limit=max(1, min(limit, 1000)))
+
+    if format.lower() == "json":
+        return {"total": len(items), "items": items}
+
+    headers = [
+        "id",
+        "created_at",
+        "feature_count",
+        "total_area_m2",
+        "total_length_m",
+        "bbox",
+    ]
+    rows = []
+    for item in items:
+        result = item["result"]
+        rows.append(
+            [
+                str(item["id"]),
+                item["created_at"],
+                str(result.get("feature_count", 0)),
+                str(result.get("total_area_m2", 0)),
+                str(result.get("total_length_m", 0)),
+                json.dumps(result.get("bbox", [])),
+            ]
+        )
+
+    csv_lines = [",".join(headers)]
+    csv_lines.extend(",".join(row) for row in rows)
+    csv_text = "\n".join(csv_lines)
+    return Response(content=csv_text, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=geo-measurements.csv"})
 
 
 def _parse_geojson_payload(raw: bytes):
